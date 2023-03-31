@@ -27,7 +27,9 @@ export async function parser(email, password, fileName) {
 
 			await page.type('#user_email', email);
 
-			const buttonContinue = await page.waitForSelector('.button');
+			const buttonContinue = await page.waitForSelector(
+				'button[class="button is-primary"]:not(:empty):not(:has(*))'
+			);
 			await buttonContinue.click();
 
 			await page.waitForSelector('input[type="password"]');
@@ -35,8 +37,6 @@ export async function parser(email, password, fileName) {
 			await page.type('input[type="password"]', password);
 
 			await page.screenshot({ path: 'screen1.png' });
-
-			await new Promise((resolve) => setTimeout(resolve, 2000));
 
 			const buttonSubmit = await page.waitForSelector('.button');
 			await buttonSubmit.click();

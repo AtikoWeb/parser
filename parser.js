@@ -15,8 +15,7 @@ export async function parser(email, password, fileName) {
 		await page.goto('https://kaspi.kz/mc/#/login', {
 			waitUntil: 'networkidle2',
 		});
-
-		await new Promise((resolve) => setTimeout(resolve, 2000));
+		await page.screenshot({ path: 'screen.png' });
 
 		const navbar = await page.$('.navbar-item');
 
@@ -31,11 +30,15 @@ export async function parser(email, password, fileName) {
 			const button = await page.waitForSelector('.is-primary');
 			await button.click();
 
+			await page.screenshot({ path: 'screen1.png' });
+
 			await page.waitForSelector('input[type="password"]');
 
 			await page.type('input[type="password"]', password);
 
 			await page.click('.is-primary');
+
+			await page.screenshot({ path: 'screen2.png' });
 
 			await page.waitForSelector('.navbar-item');
 		}

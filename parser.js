@@ -6,13 +6,17 @@ export async function parser(email, password, fileName) {
 		//Начало парсинга
 		console.time('Parser');
 
-		const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+		const browser = await puppeteer.launch({
+			args: ['--no-sandbox'],
+		});
 		const page = await browser.newPage();
 		await page.setViewport({ width: 1920, height: 1080 });
 
 		await page.goto('https://kaspi.kz/mc/#/login', {
 			waitUntil: 'networkidle2',
 		});
+
+		await new Promise((resolve) => setTimeout(resolve, 2000));
 
 		const navbar = await page.$('.navbar-item');
 

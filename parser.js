@@ -36,6 +36,8 @@ export async function parser(email, password, fileName) {
 
 			await page.screenshot({ path: 'screen1.png' });
 
+			await new Promise((resolve) => setTimeout(resolve, 2000));
+
 			const buttonSubmit = await page.waitForSelector('.button');
 			await buttonSubmit.click();
 

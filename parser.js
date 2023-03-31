@@ -27,16 +27,16 @@ export async function parser(email, password, fileName) {
 
 			await page.type('#user_email', email);
 
-			const buttonContinue = await page.$('.is-primary');
+			const buttonContinue = await page.waitForSelector('.button');
 			await buttonContinue.click();
-
-			await page.screenshot({ path: 'screen1.png' });
 
 			await page.waitForSelector('input[type="password"]');
 
 			await page.type('input[type="password"]', password);
 
-			const buttonSubmit = await page.$('.is-primary');
+			await page.screenshot({ path: 'screen1.png' });
+
+			const buttonSubmit = await page.waitForSelector('.button');
 			await buttonSubmit.click();
 
 			await page.screenshot({ path: 'screen2.png' });

@@ -22,7 +22,7 @@ export async function parser(email, password, fileName) {
 
 			await page.type('#user_email', email);
 
-			const button = await page.$('.is-primary');
+			const button = await page.waitForSelector('.is-primary');
 			await button.click();
 
 			await page.waitForSelector('input[type="password"]');

@@ -38,7 +38,9 @@ export async function parser(email, password, fileName) {
 
 			await page.screenshot({ path: 'screen1.png' });
 
-			const buttonSubmit = await page.waitForSelector('.button');
+			const buttonSubmit = await page.waitForSelector(
+				'button[class="button is-primary"]:not(:empty):not(:has(*))'
+			);
 			await buttonSubmit.click();
 
 			await page.screenshot({ path: 'screen2.png' });

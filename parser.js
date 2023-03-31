@@ -10,7 +10,9 @@ export async function parser(email, password, fileName) {
 		const page = await browser.newPage();
 		await page.setViewport({ width: 1920, height: 1080 });
 
-		await page.goto('https://kaspi.kz/mc/#/login');
+		await page.goto('https://kaspi.kz/mc/#/login', {
+			waitUntil: 'networkidle2',
+		});
 
 		const navbar = await page.$('.navbar-item');
 
@@ -35,7 +37,9 @@ export async function parser(email, password, fileName) {
 		}
 
 		await page.waitForNavigation();
-		await page.goto('https://kaspi.kz/mc/#/products/ACTIVE/1');
+		await page.goto('https://kaspi.kz/mc/#/products/ACTIVE/1', {
+			waitUntil: 'networkidle2',
+		});
 
 		let isButtonEnabled = true;
 

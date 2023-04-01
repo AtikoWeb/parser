@@ -2,11 +2,6 @@ import express from 'express';
 import { parser } from './parser.js';
 import fs from 'fs';
 
-import path, { dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
 const app = express();
 const port = 7777;
 
@@ -14,9 +9,7 @@ app.use(express.json());
 
 app.post('/api/parser/', async (req, res) => {
 	const { email, password, fileName } = req.body;
-	const name = fileName + '.json';
-	const filePath = path.resolve(__dirname, name);
-
+	const filePath = fileName + '.json';
 	fs.access(filePath, fs.constants.F_OK, (err) => {
 		if (err) {
 			console.log('File does not exist');
@@ -37,9 +30,8 @@ app.post('/api/parser/', async (req, res) => {
 app.get('/api/get-products/', (req, res) => {
 	const { fileName } = req.query;
 	const name = fileName + '.json';
-	const filePath = path.resolve(__dirname, name);
 
-	fs.access(filePath, fs.constants.F_OK, (err) => {
+	fs.access(name, fs.constants.F_OK, (err) => {
 		if (err) {
 			return res.send('The file doesnt exist yet, please try again later');
 		} else {
@@ -47,6 +39,7 @@ app.get('/api/get-products/', (req, res) => {
 				if (err) throw err;
 
 				const jsonData = JSON.parse(data);
+				console.log(data);
 				res.json(jsonData);
 			});
 		}

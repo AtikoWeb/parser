@@ -12,13 +12,11 @@ export async function parser(email, password, fileName) {
 		const page = await browser.newPage();
 		await page.setViewport({ width: 1920, height: 1080 });
 
-		await page.goto('https://kaspi.kz/mc/#/login', {
-			waitUntil: 'networkidle2',
-		});
-		await page.screenshot({ path: 'screen.png' });
+		await page.goto('https://kaspi.kz/mc/#/login');
 
 		const navbar = await page.$('.navbar-item');
 
+		//Вход в Кабинет
 		if (!navbar) {
 			await page.waitForSelector('.tabs.is-centered.is-fullwidth');
 			await page.click('.tabs.is-centered.is-fullwidth li:nth-child(2)');
@@ -36,30 +34,26 @@ export async function parser(email, password, fileName) {
 
 			await page.type('input[type="password"]', password);
 
-			await page.screenshot({ path: 'screen1.png' });
-
 			const buttonSubmit = await page.waitForSelector(
 				'button[class="button is-primary"]:not(:empty):not(:has(*))'
 			);
 			await buttonSubmit.click();
 
-			await page.screenshot({ path: 'screen2.png' });
-
 			await page.waitForSelector('.navbar-item');
 		}
 
 		await page.waitForNavigation();
-		await page.goto('https://kaspi.kz/mc/#/products/ACTIVE/1', {
-			waitUntil: 'networkidle2',
-		});
+		await page.goto('https://kaspi.kz/mc/#/products/ACTIVE/1');
 
 		let isButtonEnabled = true;
 
 		const products = [];
+		const ids = new Set();
 
 		while (isButtonEnabled) {
 			const productRows = await page.$$('tbody tr');
-			for (let i = 0; i < productRows.length; i++) {
+			const numRows = Math.min(productRows.length, 10); // не проходим больше 10 строк
+			for (let i = 0; i < numRows; i++) {
 				const productRow = productRows[i];
 
 				const productInfo = await productRow.$('td[data-label="Товар"]');
@@ -79,27 +73,32 @@ export async function parser(email, password, fileName) {
 				const matches = productUrl.match(idRegExp);
 				const id = matches[1];
 
-				const productPrice = await productRow.$(
-					'td[data-label="Цена, тенге"] p.subtitle.is-5'
-				);
-				const price = await page.evaluate(
-					(productPrice) => productPrice.textContent.trim(),
-					productPrice
-				);
+				// Проверяем, есть ли такой id в Set, если нет, то сохраняем продукт и добавляем id в Set
+				if (!ids.has(id)) {
+					const productPrice = await productRow.$(
+						'td[data-label="Цена, тенге"] p.subtitle.is-5'
+					);
+					const price = await page.evaluate(
+						(productPrice) => productPrice.textContent.trim(),
+						productPrice
+					);
 
-				const productStatus = await productRow.$('td[data-label="Статус"]');
-				const status = await page.evaluate(
-					(productStatus) => productStatus.textContent.trim(),
-					productStatus
-				);
+					const productStatus = await productRow.$('td[data-label="Статус"]');
+					const status = await page.evaluate(
+						(productStatus) => productStatus.textContent.trim(),
+						productStatus
+					);
 
-				products.push({
-					id,
-					name: productName,
-					url: productUrl,
-					price,
-					status,
-				});
+					ids.add(id);
+
+					products.push({
+						id,
+						name: productName,
+						url: productUrl,
+						price,
+						status,
+					});
+				}
 			}
 
 			// Найти элемент кнопки "Next page"
@@ -109,15 +108,30 @@ export async function parser(email, password, fileName) {
 			const isDisabled = await nextPageButton.evaluate((button) =>
 				button.hasAttribute('disabled')
 			);
-			if (!isDisabled) {
+
+			// Получить текст, содержащий количество товаров на странице
+			const pageInfo = await page.$('.page-info');
+			const pageText = await pageInfo.evaluate((pageInfo) =>
+				pageInfo.textContent.trim()
+			);
+			const matches = pageText.match(/из\s+(\d+)/);
+			const totalProducts = matches[1];
+
+			// Проверяем, собрано ли количество товаров на странице равно общему количеству товаров
+			if (products.length === parseInt(totalProducts)) {
+				isButtonEnabled = false;
+			} else if (!isDisabled) {
 				await nextPageButton.click();
 				await page.waitForSelector('.pagination-next');
 			} else {
 				isButtonEnabled = false;
 			}
+			console.log(`Parsing... ${pageText}`);
 		}
 		//Конец парсинга
 		console.timeEnd('Parser');
+
+		console.log(products.length);
 
 		const space = 2;
 
@@ -125,7 +139,7 @@ export async function parser(email, password, fileName) {
 
 		fs.writeFile(name, JSON.stringify(products, null, space), (err) => {
 			if (err) throw err;
-			console.log('Результаты сохранены в файл products.json');
+			console.log(`Результаты сохранены в файл ${name}`);
 		});
 
 		browser.close();

@@ -39,7 +39,6 @@ app.get('/api/get-products/', (req, res) => {
 				if (err) throw err;
 
 				const jsonData = JSON.parse(data);
-				console.log(data);
 				res.json(jsonData);
 			});
 		}

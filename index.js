@@ -28,7 +28,7 @@ app.post('/api/parser/', async (req, res) => {
 });
 
 app.get('/api/get-products/', (req, res) => {
-	const { fileName } = req.query;
+	const fileName = req.headers['file-name'];
 	const name = fileName + '.json';
 
 	fs.access(name, fs.constants.F_OK, (err) => {

@@ -24,25 +24,34 @@ app.post('/api/parser/', async (req, res) => {
 		res.json('Parsing has begun');
 	} catch (error) {
 		console.log(error);
+		return res.send('Something went wrong');
 	}
 });
 
 app.get('/api/get-products/', (req, res) => {
-	const fileName = req.headers['file-name'];
-	const name = fileName + '.json';
+	try {
+		const { fileName } = req.query;
+		const name = fileName + '.json';
 
-	fs.access(name, fs.constants.F_OK, (err) => {
-		if (err) {
-			return res.send('The file doesnt exist yet, please try again later');
-		} else {
-			fs.readFile(name, (err, data) => {
-				if (err) throw err;
-
-				const jsonData = JSON.parse(data);
-				res.json(jsonData);
-			});
+		if (!fileName) {
+			return res.send('Something went wrong');
 		}
-	});
+
+		fs.access(name, fs.constants.F_OK, (err) => {
+			if (err) {
+				return res.send('The file doesnt exist yet, please try again later');
+			} else {
+				fs.readFile(name, (err, data) => {
+					if (err) throw err;
+
+					const jsonData = JSON.parse(data);
+					res.json(jsonData);
+				});
+			}
+		});
+	} catch (error) {
+		console.log(error);
+	}
 });
 
 app.listen(port, () => {

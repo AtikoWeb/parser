@@ -79,12 +79,9 @@ export async function parser(email, password, fileName) {
 
 				const productUrl = await productLink.getAttribute('href');
 
-				const regexpId = /\d{9}_\d{8}/;
-
-				const currentTitle = await productInfo.$('p.subtitle.is-6');
-				const title = await currentTitle.innerText();
-
-				const id = title.match(regexpId);
+				const idRegExp = /(\d+)\/$/;
+				const matches = productUrl.match(idRegExp);
+				const id = matches[1];
 
 				// Проверяем, есть ли такой id в Set, если нет, то сохраняем продукт и добавляем id в Set
 				const productPrice = await productRow.$(

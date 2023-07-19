@@ -1,4 +1,4 @@
-import { chromium } from 'playwright';
+import puppeteer from 'puppeteer';
 import fs from 'fs/promises';
 
 export async function parser(email, password, fileName) {
@@ -6,16 +6,13 @@ export async function parser(email, password, fileName) {
 		// Начало парсинга
 		console.time('Parser');
 
-		const browser = await chromium.launch({
+		const browser = await puppeteer.launch({
 			args: ['--no-sandbox', '--disable-dev-shm-usage'],
 			ignoreHTTPSErrors: true,
 		});
 
-		const context = await browser.newContext({
-			viewport: { width: 1920, height: 1080 },
-		});
-
-		const page = await context.newPage();
+		const page = await browser.newPage();
+		await page.setViewport({ width: 1920, height: 1080 });
 
 		await page.goto('https://kaspi.kz/mc/#/login');
 
@@ -27,8 +24,7 @@ export async function parser(email, password, fileName) {
 			await page.click('.tabs.is-centered.is-fullwidth li:nth-child(2)');
 
 			await page.waitForSelector('#user_email');
-
-			await page.fill('#user_email', email);
+			await page.type('#user_email', email);
 
 			const buttonContinue = await page.waitForSelector(
 				'button[class="button is-primary"]:not(:empty):not(:has(*))'
@@ -36,8 +32,7 @@ export async function parser(email, password, fileName) {
 			await buttonContinue.click();
 
 			await page.waitForSelector('input[type="password"]');
-
-			await page.fill('input[type="password"]', password);
+			await page.type('input[type="password"]', password);
 
 			await page.screenshot({ path: 'image1.png' });
 
@@ -72,25 +67,39 @@ export async function parser(email, password, fileName) {
 			for (let i = 0; i < numRows; i++) {
 				const productRow = productRows[i];
 
-				const productInfo = await productRow.$('td[data-label="Товар"]');
+				const productNameElement = await productRow.$(
+					'td[data-label="Товар"] a'
+				);
+				const productName = await page.evaluate(
+					(el) => el.textContent,
+					productNameElement
+				);
 
-				const productLink = await productInfo.$('a');
-				const productName = await productLink.textContent();
-
-				const productUrl = await productLink.getAttribute('href');
+				const productUrl = await page.evaluate(
+					(el) => el.href,
+					productNameElement
+				);
 
 				const idRegExp = /(\d+)\/$/;
 				const matches = productUrl.match(idRegExp);
 				const id = matches[1];
 
 				// Проверяем, есть ли такой id в Set, если нет, то сохраняем продукт и добавляем id в Set
-				const productPrice = await productRow.$(
+				const productPriceElement = await productRow.$(
 					'td[data-label="Цена, тенге"] p.subtitle.is-5'
 				);
-				const price = await productPrice.textContent();
+				const price = await page.evaluate(
+					(el) => el.textContent,
+					productPriceElement
+				);
 
-				const productStatus = await productRow.$('td[data-label="Статус"]');
-				const status = await productStatus.innerText();
+				const productStatusElement = await productRow.$(
+					'td[data-label="Статус"]'
+				);
+				const status = await page.evaluate(
+					(el) => el.innerText,
+					productStatusElement
+				);
 
 				ids.add(id);
 
@@ -109,11 +118,17 @@ export async function parser(email, password, fileName) {
 			});
 
 			// Если кнопка не имеет атрибута "disabled", то кликнуть на неё
-			const isDisabled = await nextPageButton.getAttribute('disabled');
+			const isDisabled = await page.evaluate(
+				(el) => el.hasAttribute('disabled'),
+				nextPageButton
+			);
 
 			// Получить текст, содержащий количество товаров на странице
-			const pageInfo = await page.$('.page-info');
-			const pageText = await pageInfo.textContent();
+			const pageInfoElement = await page.$('.page-info');
+			const pageText = await page.evaluate(
+				(el) => el.textContent,
+				pageInfoElement
+			);
 			const matches = pageText.match(/из\s+(\d+)/);
 			const totalProducts = matches[1];
 

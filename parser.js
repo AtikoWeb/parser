@@ -7,6 +7,7 @@ export async function parser(email, password, fileName) {
 		console.time('Parser');
 
 		const browser = await puppeteer.launch({
+			headless: 'new',
 			args: ['--no-sandbox', '--disable-dev-shm-usage'],
 			ignoreHTTPSErrors: true,
 		});
@@ -24,7 +25,8 @@ export async function parser(email, password, fileName) {
 			await page.click('.tabs.is-centered.is-fullwidth li:nth-child(2)');
 
 			await page.waitForSelector('#user_email');
-			await page.type('#user_email', email);
+
+			await page.type('#user_email', 'timmy.shiyanov@mail.ru');
 
 			const buttonContinue = await page.waitForSelector(
 				'button[class="button is-primary"]:not(:empty):not(:has(*))'
@@ -32,9 +34,8 @@ export async function parser(email, password, fileName) {
 			await buttonContinue.click();
 
 			await page.waitForSelector('input[type="password"]');
-			await page.type('input[type="password"]', password);
 
-			await page.screenshot({ path: 'image1.png' });
+			await page.type('input[type="password"]', 'User#153789');
 
 			const buttonSubmit = await page.waitForSelector(
 				'button[class="button is-primary"]:not(:empty):not(:has(*))'
@@ -42,13 +43,10 @@ export async function parser(email, password, fileName) {
 			await buttonSubmit.click();
 
 			await page.waitForSelector('.navbar-item');
-			await page.screenshot({ path: 'image2.png' });
 		}
 
-		await page.waitForNavigation();
-
-		await page.goto('https://kaspi.kz/mc/#/products/ACTIVE/1', {
-			timeout: 120000,
+		await page.goto(`https://kaspi.kz/mc/#/products/ACTIVE/1`, {
+			timeout: 30000,
 		});
 
 		await page.waitForSelector('.pagination-next', { timeout: 120000 });
@@ -70,36 +68,26 @@ export async function parser(email, password, fileName) {
 				const productNameElement = await productRow.$(
 					'td[data-label="Товар"] a'
 				);
-				const productName = await page.evaluate(
-					(el) => el.textContent,
-					productNameElement
+				const productName = await (
+					await productNameElement.getProperty('textContent')
+				).jsonValue();
+
+				const productUrl = await (
+					await productNameElement.getProperty('href')
+				).jsonValue();
+
+				const productPrice = await productRow.$(
+					'td[data-label="Цена, тенге"] p.subtitle.is-5'
 				);
 
-				const productUrl = await page.evaluate(
-					(el) => el.href,
-					productNameElement
+				const price = await page.evaluate(
+					(productPrice) => productPrice.textContent.trim(),
+					productPrice
 				);
 
 				const idRegExp = /(\d+)\/$/;
 				const matches = productUrl.match(idRegExp);
 				const id = matches[1];
-
-				// Проверяем, есть ли такой id в Set, если нет, то сохраняем продукт и добавляем id в Set
-				const productPriceElement = await productRow.$(
-					'td[data-label="Цена, тенге"] p.subtitle.is-5'
-				);
-				const price = await page.evaluate(
-					(el) => el.textContent,
-					productPriceElement
-				);
-
-				const productStatusElement = await productRow.$(
-					'td[data-label="Статус"]'
-				);
-				const status = await page.evaluate(
-					(el) => el.innerText,
-					productStatusElement
-				);
 
 				ids.add(id);
 
@@ -108,7 +96,6 @@ export async function parser(email, password, fileName) {
 					name: productName,
 					url: productUrl,
 					price,
-					status,
 				});
 			}
 

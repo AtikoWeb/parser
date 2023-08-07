@@ -26,7 +26,7 @@ export async function parser(email, password, fileName) {
 
 			await page.waitForSelector('#user_email');
 
-			await page.type('#user_email', 'timmy.shiyanov@mail.ru');
+			await page.type('#user_email', email);
 
 			const buttonContinue = await page.waitForSelector(
 				'button[class="button is-primary"]:not(:empty):not(:has(*))'
@@ -35,7 +35,7 @@ export async function parser(email, password, fileName) {
 
 			await page.waitForSelector('input[type="password"]');
 
-			await page.type('input[type="password"]', 'User#153789');
+			await page.type('input[type="password"]', password);
 
 			const buttonSubmit = await page.waitForSelector(
 				'button[class="button is-primary"]:not(:empty):not(:has(*))'

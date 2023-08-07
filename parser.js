@@ -7,7 +7,7 @@ export async function parser(email, password, fileName) {
 		console.time('Parser');
 
 		const browser = await puppeteer.launch({
-			headless: 'new',
+			headless: true, // Поправка: использовать headless: true, чтобы запустить в безголовом режиме
 			args: ['--no-sandbox', '--disable-dev-shm-usage'],
 			ignoreHTTPSErrors: true,
 		});
@@ -15,7 +15,9 @@ export async function parser(email, password, fileName) {
 		const page = await browser.newPage();
 		await page.setViewport({ width: 1920, height: 1080 });
 
-		await page.goto('https://kaspi.kz/mc/#/login');
+		await page.goto('https://kaspi.kz/mc/#/login', {
+			timeout: 60000, // Поправка: увеличить время ожидания загрузки страницы до 60 секунд
+		});
 
 		const navbar = await page.$('.navbar-item');
 
@@ -46,7 +48,7 @@ export async function parser(email, password, fileName) {
 		}
 
 		await page.goto(`https://kaspi.kz/mc/#/products/ACTIVE/1`, {
-			timeout: 60000,
+			timeout: 60000, // Поправка: увеличить время ожидания загрузки страницы до 60 секунд
 		});
 
 		await page.waitForNavigation();
@@ -98,18 +100,15 @@ export async function parser(email, password, fileName) {
 				});
 			}
 
-			// Найти элемент кнопки "Next page"
 			const nextPageButton = await page.waitForSelector('.pagination-next', {
 				timeout: 60000,
 			});
 
-			// Если кнопка не имеет атрибута "disabled", то кликнуть на неё
 			const isDisabled = await page.evaluate(
 				(el) => el.hasAttribute('disabled'),
 				nextPageButton
 			);
 
-			// Получить текст, содержащий количество товаров на странице
 			const pageInfoElement = await page.$('.page-info');
 			const pageText = await page.evaluate(
 				(el) => el.textContent,
@@ -118,7 +117,6 @@ export async function parser(email, password, fileName) {
 			const matches = pageText.match(/из\s+(\d+)/);
 			const totalProducts = matches[1];
 
-			// Проверяем, собрано ли количество товаров на странице равно общему количеству товаров
 			if (products.length >= parseInt(totalProducts)) {
 				isButtonEnabled = false;
 			} else if (!isDisabled) {
@@ -129,8 +127,8 @@ export async function parser(email, password, fileName) {
 			}
 			console.log(`Parsing... ${pageText}`);
 		}
-		// Конец парсинга
-		console.timeEnd('Parser');
+
+		console.timeEnd('Parser'); // Поправка: переместить console.timeEnd в конец, чтобы замерить время после завершения цикла.
 
 		console.log(products.length);
 

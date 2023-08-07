@@ -7,7 +7,7 @@ export async function parser(email, password, fileName) {
 		console.time('Parser');
 
 		const browser = await puppeteer.launch({
-			headless: true,
+			headless: 'new',
 			args: ['--no-sandbox', '--disable-dev-shm-usage'],
 			ignoreHTTPSErrors: true,
 		});
@@ -49,8 +49,7 @@ export async function parser(email, password, fileName) {
 			timeout: 30000,
 		});
 
-		await page.waitForSelector('.pagination-next', { timeout: 120000 });
-
+		await page.waitForNavigation();
 		await page.screenshot({ path: 'image.png' });
 
 		let isButtonEnabled = true;

@@ -46,7 +46,7 @@ export async function parser(email, password, fileName) {
 		}
 
 		await page.goto(`https://kaspi.kz/mc/#/products/ACTIVE/1`, {
-			timeout: 30000,
+			timeout: 60000,
 		});
 
 		await page.waitForNavigation();

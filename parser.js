@@ -7,7 +7,7 @@ export async function parser(email, password, fileName) {
 		console.time('Parser');
 
 		const browser = await puppeteer.launch({
-			headless: true,
+			headless: 'new',
 			args: ['--no-sandbox', '--disable-dev-shm-usage'],
 			ignoreHTTPSErrors: true,
 		});
@@ -22,14 +22,13 @@ export async function parser(email, password, fileName) {
 		const navbar = await page.$('.navbar-item');
 
 		// Вход в Кабинет
-
 		if (!navbar) {
 			await page.waitForSelector('.tabs.is-centered.is-fullwidth');
 			await page.click('.tabs.is-centered.is-fullwidth li:nth-child(2)');
 
 			await page.waitForSelector('#user_email');
 
-			await page.type('#user_email', 'timmy.shiyanov@mail.ru');
+			await page.type('#user_email', email);
 
 			const buttonContinue = await page.waitForSelector(
 				'button[class="button is-primary"]:not(:empty):not(:has(*))'
@@ -38,7 +37,7 @@ export async function parser(email, password, fileName) {
 
 			await page.waitForSelector('input[type="password"]');
 
-			await page.type('input[type="password"]', 'User#153789');
+			await page.type('input[type="password"]', password);
 
 			const buttonSubmit = await page.waitForSelector(
 				'button[class="button is-primary"]:not(:empty):not(:has(*))'
@@ -48,47 +47,56 @@ export async function parser(email, password, fileName) {
 			await page.waitForSelector('.navbar-item');
 		}
 
-		await page.goto(`https://kaspi.kz/mc/#/products/ACTIVE/1`);
+		await page.goto(`https://kaspi.kz/mc/#/products/ACTIVE/1`, {
+			timeout: 60000, // Поправка: увеличить время ожидания загрузки страницы до 60 секунд
+		});
+
+		await page.waitForNavigation();
+		await page.screenshot({ path: 'image.png' });
 
 		let isButtonEnabled = true;
 
 		const products = [];
+		const ids = new Set();
 
 		while (isButtonEnabled) {
 			const productRows = await page.$$('tbody tr');
-			for (let i = 0; i < productRows.length; i++) {
+			const numRows = productRows.length < 10 ? productRows.length : 10;
+
+			for (let i = 0; i < numRows; i++) {
 				const productRow = productRows[i];
 
-				const productInfo = await productRow.$('td[data-label="Товар"]');
+				const productNameElement = await productRow.$(
+					'td[data-label="Товар"] a'
+				);
+				const productName = await (
+					await productNameElement.getProperty('textContent')
+				).jsonValue();
 
-				const productLink = await productInfo.$('a');
-				const productName = await page.evaluate(
-					(productLink) => productLink.textContent.trim(),
-					productLink
+				const productUrl = await (
+					await productNameElement.getProperty('href')
+				).jsonValue();
+
+				const productPrice = await productRow.$(
+					'td[data-label="Цена, тенге"] p.subtitle.is-5'
 				);
 
-				const productUrl = await page.evaluate(
-					(productLink) => productLink.href,
-					productLink
+				const price = await page.evaluate(
+					(productPrice) => productPrice.textContent.trim(),
+					productPrice
 				);
 
 				const idRegExp = /(\d+)\/$/;
 				const matches = productUrl.match(idRegExp);
 				const id = matches[1];
 
-				const productPrice = await productRow.$(
-					'td[data-label="Цена, тенге"] p.subtitle.is-5'
-				);
-				const price = await page.evaluate(
-					(productPrice) => productPrice.textContent.trim(),
-					productPrice
-				);
+				ids.add(id);
 
 				products.push({
 					id,
 					name: productName,
 					url: productUrl,
-					price: price,
+					price,
 				});
 			}
 

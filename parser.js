@@ -7,7 +7,6 @@ export async function parser(email, password, fileName) {
 		console.time('Parser');
 
 		const browser = await puppeteer.launch({
-			headless: true, // Поправка: использовать headless: true, чтобы запустить в безголовом режиме
 			args: ['--no-sandbox', '--disable-dev-shm-usage'],
 			ignoreHTTPSErrors: true,
 		});

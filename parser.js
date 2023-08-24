@@ -14,8 +14,9 @@ export async function parser(email, password, fileName) {
 		const page = await browser.newPage();
 
 		await page.goto('https://kaspi.kz/mc/#/login', {
-			timeout: 60000,
+			waitUntil: 'domcontentloaded',
 		});
+		await page.waitForTimeout(30000);
 
 		await page.screenshot({ path: 'image.png' });
 
@@ -42,8 +43,9 @@ export async function parser(email, password, fileName) {
 			await page.waitForSelector('.navbar-item');
 		}
 
+		await page.waitForTimeout(3000);
 		await page.goto('https://kaspi.kz/mc/#/products/ACTIVE/1', {
-			timeout: 120000,
+			waitUntil: 'domcontentloaded',
 		});
 		await page.screenshot({ path: 'image.png' });
 

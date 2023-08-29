@@ -14,6 +14,11 @@ export async function parser(email, password, fileName) {
 
 		const page = await browser.newPage();
 
+		await page.setViewport({
+			width: 1280, // Ширина окна в пикселях
+			height: 720, // Высота окна в пикселях
+		});
+
 		await page.goto('https://kaspi.kz/mc/#/login', {
 			waitUntil: 'domcontentloaded',
 		});

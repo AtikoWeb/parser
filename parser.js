@@ -49,13 +49,12 @@ export async function parser(email, password, fileName) {
 		}
 
 		await page.waitForTimeout(3000);
-		try {
-			await page.goto('https://kaspi.kz/mc/#/products/ACTIVE/1', {
-				waitUntil: 'domcontentloaded',
-			});
-		} catch (error) {
-			console.error('Ошибка при переходе на новую страницу:', error);
-		}
+		await page.goto('https://kaspi.kz/mc/#/products/ACTIVE/1', {
+			waitUntil: 'domcontentloaded',
+		});
+		await page.waitForNavigation({
+			waitUntil: 'domcontentloaded',
+		});
 		await page.screenshot({ path: 'image.png' });
 
 		let isButtonEnabled = true;

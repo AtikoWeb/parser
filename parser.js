@@ -9,6 +9,7 @@ export async function parser(email, password, fileName) {
 			headless: 'new',
 			args: ['--no-sandbox', '--disable-dev-shm-usage'],
 			ignoreHTTPSErrors: true,
+			ignoreDefaultArgs: ['--disable-extensions'],
 		});
 
 		const page = await browser.newPage();
@@ -16,7 +17,6 @@ export async function parser(email, password, fileName) {
 		await page.goto('https://kaspi.kz/mc/#/login', {
 			waitUntil: 'domcontentloaded',
 		});
-		await page.waitForTimeout(30000);
 
 		await page.screenshot({ path: 'image.png' });
 

@@ -52,9 +52,6 @@ export async function parser(email, password, fileName) {
 		await page.goto('https://kaspi.kz/mc/#/products/ACTIVE/1', {
 			waitUntil: 'domcontentloaded',
 		});
-		await page.waitForNavigation({
-			waitUntil: 'domcontentloaded',
-		});
 		await page.screenshot({ path: 'image.png' });
 
 		let isButtonEnabled = true;

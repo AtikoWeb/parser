@@ -1,27 +1,20 @@
-import puppeteer from 'puppeteer';
+import { firefox } from 'playwright';
 import fs from 'fs/promises';
 
 export async function parser(email, password, fileName) {
 	try {
 		console.time('Parser');
 
-		const browser = await puppeteer.launch({
-			headless: 'new',
-			args: ['--no-sandbox', '--disable-dev-shm-usage'],
-			ignoreHTTPSErrors: true,
-			ignoreDefaultArgs: ['--disable-extensions'],
+		const browser = await firefox.launch();
+		const context = await browser.newContext();
+		const page = await context.newPage();
+
+		await page.setViewportSize({
+			width: 1280,
+			height: 720,
 		});
 
-		const page = await browser.newPage();
-
-		await page.setViewport({
-			width: 1280, // Ширина окна в пикселях
-			height: 720, // Высота окна в пикселях
-		});
-
-		await page.goto('https://kaspi.kz/mc/#/login', {
-			waitUntil: 'domcontentloaded',
-		});
+		await page.goto('https://kaspi.kz/mc/#/login');
 
 		await page.screenshot({ path: 'image.png' });
 
@@ -33,46 +26,29 @@ export async function parser(email, password, fileName) {
 			await page.waitForSelector('#user_email');
 			await page.type('#user_email', email);
 			await page.screenshot({ path: 'image.png' });
+
 			const buttonContinue = await page.waitForSelector(
 				'button[class="button is-primary"]:not(:empty):not(:has(*))'
 			);
 			await buttonContinue.click();
+
 			await page.waitForSelector('input[type="password"]');
 			await page.type('input[type="password"]', password);
 			await page.screenshot({ path: 'image.png' });
+
 			const buttonSubmit = await page.waitForSelector(
 				'button[class="button is-primary"]:not(:empty):not(:has(*))'
 			);
 			await buttonSubmit.click();
+
 			await page.waitForSelector('.navbar-item');
 		}
 
-		await page.screenshot({ path: 'image.png' });
+		await page.goto('https://kaspi.kz/mc/#/products/ACTIVE/1', {
+			timeout: 60000,
+		});
 
-		const maxRetries = 3;
-		let retries = 0;
-
-		while (retries < maxRetries) {
-			await page.goto('https://kaspi.kz/mc/#/products/ACTIVE/1', {
-				waitUntil: 'domcontentloaded',
-			});
-
-			// Проверьте, изменился ли контент
-			const hasChanged = await page.waitForFunction(
-				() => {
-					return document.querySelector('p.subtitle.is-5') !== null;
-				},
-				{ timeout: 10000 }
-			); // Установите приемлемое время ожидания
-
-			if (hasChanged) {
-				break; // Выход из цикла, если контент изменился
-			}
-
-			retries++;
-		}
-
-		await page.screenshot({ path: 'image.png' });
+		await page.screenshot({ path: 'image.png', timeout: 5000 });
 
 		let isButtonEnabled = true;
 		const products = [];

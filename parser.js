@@ -44,9 +44,10 @@ export async function parser(email, password, fileName) {
 				'button[class="button is-primary"]:not(:empty):not(:has(*))'
 			);
 			await buttonSubmit.click();
-			await page.screenshot({ path: 'image.png' });
 			await page.waitForSelector('.navbar-item');
 		}
+
+		await page.screenshot({ path: 'image.png' });
 
 		const maxRetries = 3;
 		let retries = 0;

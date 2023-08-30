@@ -21,7 +21,7 @@ export async function parser(email, password, fileName) {
 		});
 
 		await page.goto('https://kaspi.kz/mc/#/login', {
-			waitUntil: 'domcontentloaded',
+			timeout: 60000,
 		});
 
 		await page.screenshot({ path: 'image.png' });

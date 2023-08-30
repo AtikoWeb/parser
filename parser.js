@@ -49,7 +49,7 @@ export async function parser(email, password, fileName) {
 		}
 
 		await page.waitForTimeout(3000);
-		await page.goto('https://github.com', {
+		await page.goto('https://kaspi.kz/mc/#/quality-control', {
 			waitUntil: 'domcontentloaded',
 		});
 		await page.screenshot({ path: 'image.png' });

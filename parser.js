@@ -7,9 +7,6 @@ export async function parser(email, password, fileName) {
 
 		const browser = await webkit.launch({
 			headless: true,
-			args: ['--no-sandbox', '--disable-dev-shm-usage'],
-			ignoreHTTPSErrors: true,
-			ignoreDefaultArgs: ['--disable-extensions'],
 		});
 
 		const context = await browser.newContext();

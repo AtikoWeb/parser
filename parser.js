@@ -55,7 +55,7 @@ export async function parser(email, password, fileName) {
 
 		while (retries < maxRetries) {
 			await page.goto('https://kaspi.kz/mc/#/products/ACTIVE/1', {
-				waitUntil: 'domcontentloaded',
+				waitUntil: 'load',
 			});
 
 			const hasChanged = await page.waitForFunction(

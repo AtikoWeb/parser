@@ -1,11 +1,11 @@
-import { firefox } from 'playwright';
+import { webkit } from 'playwright';
 import fs from 'fs/promises';
 
 export async function parser(email, password, fileName) {
 	try {
 		console.time('Parser');
 
-		const browser = await firefox.launch({
+		const browser = await webkit.launch({
 			headless: true,
 			args: ['--no-sandbox', '--disable-dev-shm-usage'],
 			ignoreHTTPSErrors: true,
@@ -21,7 +21,7 @@ export async function parser(email, password, fileName) {
 		});
 
 		await page.goto('https://kaspi.kz/mc/#/login', {
-			timeout: 60000,
+			timeout: 90000,
 		});
 
 		await page.screenshot({ path: 'image.png' });

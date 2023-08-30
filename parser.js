@@ -48,10 +48,29 @@ export async function parser(email, password, fileName) {
 			await page.waitForSelector('.navbar-item');
 		}
 
-		await page.waitForTimeout(3000);
-		await page.goto('https://kaspi.kz/mc/#/products/ACTIVE/1', {
-			waitUntil: 'domcontentloaded',
-		});
+		const maxRetries = 3;
+		let retries = 0;
+
+		while (retries < maxRetries) {
+			await page.goto('https://kaspi.kz/mc/#/products/ACTIVE/1', {
+				waitUntil: 'domcontentloaded',
+			});
+
+			// Проверьте, изменился ли контент
+			const hasChanged = await page.waitForFunction(
+				() => {
+					return document.querySelector('p.subtitle.is-5') !== null;
+				},
+				{ timeout: 10000 }
+			); // Установите приемлемое время ожидания
+
+			if (hasChanged) {
+				break; // Выход из цикла, если контент изменился
+			}
+
+			retries++;
+		}
+
 		await page.screenshot({ path: 'image.png' });
 
 		let isButtonEnabled = true;

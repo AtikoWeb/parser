@@ -52,6 +52,7 @@ export async function parser(email, password, fileName) {
 		);
 
 		await productsButton.click();
+		await page.waitForSelector('.pagination-next');
 
 		await page.screenshot({ path: 'image.png' });
 
@@ -104,6 +105,7 @@ export async function parser(email, password, fileName) {
 				await page.waitForSelector('.pagination-next', {
 					timeout: 120000,
 				});
+				await page.screenshot({ path: 'image.png' });
 			} else {
 				isButtonEnabled = false;
 			}

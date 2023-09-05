@@ -52,9 +52,8 @@ export async function parser(email, password, fileName) {
 		);
 
 		await productsButton.click();
-		await page.waitForSelector('.pagination-next');
-
 		await page.screenshot({ path: 'image.png' });
+		await page.waitForSelector('.pagination-next');
 
 		let isButtonEnabled = true;
 		const products = [];

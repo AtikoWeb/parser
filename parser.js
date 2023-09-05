@@ -13,8 +13,8 @@ export async function parser(email, password, fileName) {
 		const page = await context.newPage();
 
 		await page.setViewportSize({
-			width: 1280,
-			height: 720,
+			width: 1920,
+			height: 1080,
 		});
 
 		await page.goto('https://kaspi.kz/mc/#/login', {
@@ -47,27 +47,11 @@ export async function parser(email, password, fileName) {
 
 		await page.screenshot({ path: 'image.png' });
 
-		const maxRetries = 3;
-		let retries = 0;
+		const productsButton = await page.waitForSelector(
+			'#sidebar-offers-products'
+		);
 
-		while (retries < maxRetries) {
-			await page.goto('https://kaspi.kz/mc/#/products/ACTIVE/1', {
-				waitUntil: 'load',
-			});
-
-			const hasChanged = await page.waitForFunction(
-				() => {
-					return document.querySelector('p.subtitle.is-5') !== null;
-				},
-				{ timeout: 10000 }
-			);
-
-			if (hasChanged) {
-				break;
-			}
-
-			retries++;
-		}
+		await productsButton.click();
 
 		await page.screenshot({ path: 'image.png' });
 

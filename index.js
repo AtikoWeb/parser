@@ -52,5 +52,4 @@ app.get('/api/get-products/', (req, res) => {
 
 app.listen(port, () => {
 	console.log(`Server started on port ${port}`);
-	parser('timmy.shiyanov@mail.ru', 'User#153789', 'pushup');
 });

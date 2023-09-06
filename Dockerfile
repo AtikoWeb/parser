@@ -31,7 +31,6 @@ RUN apt-get update && apt-get install -y \
     libxv1 \
     libharfbuzz-icu0 \
     libharfbuzz0b \
-    libwoff2-1 \
     libgudev-1.0-0 \
     libwayland-client0 \
     libwayland-server0 \

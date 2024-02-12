@@ -1,10 +1,11 @@
 import { webkit } from 'playwright';
 import fs from 'fs/promises';
 
-export async function parser(email, password, fileName) {
+export async function parser({ fileName }) {
+
 	try {
 		console.time('Parser');
-
+		const startTime = Date.now();
 		const browser = await webkit.launch({
 			headless: true,
 		});
@@ -17,110 +18,63 @@ export async function parser(email, password, fileName) {
 			height: 1080,
 		});
 
-		await page.goto('https://kaspi.kz/mc/#/login', {
-			timeout: 90000,
-		});
+		await page.goto('https://kaspi.kz/shop/c/women%20underwear/?q=%3Acategory%3AWomen%20underwear%3AallMerchants%3A14666052%3AavailableInZones%3AMagnum_ZONE1&sort=relevance&sc=');
 
-		await page.screenshot({ path: 'image.png' });
-
-		const navbar = await page.$('.navbar-item');
-
-		if (!navbar) {
-			await page.waitForSelector('.tabs.is-centered.is-fullwidth');
-			await page.click('.tabs.is-centered.is-fullwidth li:nth-child(2)');
-			await page.waitForSelector('#user_email');
-			await page.type('#user_email', email);
-			await page.screenshot({ path: 'image.png' });
-			const buttonContinue = await page.waitForSelector(
-				'button[class="button is-primary"]:not(:empty):not(:has(*))'
-			);
-			await buttonContinue.click();
-			await page.waitForSelector('input[type="password"]');
-			await page.type('input[type="password"]', password);
-			await page.screenshot({ path: 'image.png' });
-			const buttonSubmit = await page.waitForSelector(
-				'button[class="button is-primary"]:not(:empty):not(:has(*))'
-			);
-			await buttonSubmit.click();
-			await page.waitForSelector('.navbar-item');
-		}
-
-		await page.screenshot({ path: 'image.png' });
-
-		const productsButton = await page.waitForSelector(
-			'#sidebar-offers-products'
-		);
-
-		await productsButton.click();
-		await page.waitForSelector('.pagination-next');
-
-		await page.screenshot({ path: 'image.png' });
-
-		let isButtonEnabled = true;
+		let isContinue = true;
 		const products = [];
 		const ids = new Set();
 
-		while (isButtonEnabled) {
-			const productRows = await page.$$('tbody tr');
-			const numRows = Math.min(productRows.length, 10);
+		// Таймер в реальном времени
+		const timer = setInterval(() => {
+			const elapsedTime = (Date.now() - startTime) / 1000;
+			console.log(`Сбор данных, время: ${elapsedTime} сек`);
+		}, 1000);
 
-			for (let i = 0; i < numRows; i++) {
-				const productRow = productRows[i];
-				const productNameElement = await productRow.$(
-					'td[data-label="Товар"] a'
-				);
-				const productName = await productNameElement.textContent();
-				const productUrl = await productNameElement.getAttribute('href');
-				const productPrice = await productRow.$(
-					'td[data-label="Цена, тенге"] p.subtitle.is-5'
-				);
-				const price = await productPrice.textContent();
-				const idRegExp = /(\d+)\/$/;
-				const matches = productUrl.match(idRegExp);
-				const id = matches[1];
-				ids.add(id);
+		while (isContinue) {
+			const dialog = await page.$('#dialogService > div > div.dialog.animation-fadeIn.current-location__dialog-wrapper');
+			if (dialog) {
+				await page.click('#dialogService > div > div.dialog.animation-fadeIn.current-location__dialog-wrapper > div.dialog__close');
+				await page.waitForTimeout(1000);
+			}
+
+			const productElements = await page.$$('.item-cards-grid__cards > .ddl_product');
+
+			for (const productElement of productElements) {
+				const productName = await productElement.$eval('.item-card__name-link', node => node.innerText);
+				const productPriceText = await productElement.$eval('.item-card__prices-price', node => node.innerText);
+				const productPrice = parseInt(productPriceText.replace(/\D/g, ''), 10);
+				const productId = await productElement.getAttribute('data-product-id');
+				// const productUrl = await productElement.$eval('.item-card__name-link', node => node.getAttribute('href'));
+
+				ids.add(productId);
 				products.push({
-					id,
+					id: productId,
 					name: productName,
-					url: productUrl,
-					price,
+					price: productPrice,
+					// url: productUrl,
 				});
 			}
 
-			const nextPageButton = await page.waitForSelector('.pagination-next', {
-				timeout: 120000,
-			});
+			const nextButton = await page.$('.pagination__el:has-text("Следующая →")');
 
-			const isDisabled =
-				(await nextPageButton.getAttribute('disabled')) !== null;
-			const pageInfoElement = await page.$('.page-info');
-			const pageText = await pageInfoElement.textContent();
-			const matches = pageText.match(/из\s+(\d+)/);
-			const totalProducts = matches[1];
-
-			if (products.length >= parseInt(totalProducts)) {
-				isButtonEnabled = false;
-			} else if (!isDisabled) {
-				await nextPageButton.click();
-				await page.waitForSelector('.pagination-next', {
-					timeout: 120000,
-				});
-				await page.screenshot({ path: 'image.png' });
-			} else {
-				isButtonEnabled = false;
+			if (!nextButton || await page.$eval('.pagination__el:has-text("Следующая →")', el => el.classList.contains('_disabled'))) {
+				isContinue = false;
 			}
-			console.log(`Parsing... ${pageText}`);
+
+			await nextButton.click();
+			await page.waitForTimeout(2000);
 		}
 
+		clearInterval(timer); // Останавливаем таймер
 		console.timeEnd('Parser');
-		console.log(products.length);
+		console.log(`${products.length} товаров собрано`);
 
 		const space = 2;
 		const name = fileName + '.json';
 		await fs.writeFile(name, JSON.stringify(products, null, space));
 		console.log(`Результаты сохранены в файл ${name}`);
-
 		await browser.close();
+
 	} catch (error) {
 		console.log(`Ошибка подключения! ${error}`);
 	}

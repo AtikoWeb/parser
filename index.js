@@ -8,7 +8,7 @@ const port = 7777;
 app.use(express.json());
 
 app.post('/api/parser/', async (req, res) => {
-	const { email, password, fileName } = req.body;
+	const { fileName } = req.body;
 	const filePath = fileName + '.json';
 	fs.access(filePath, fs.constants.F_OK, (err) => {
 		if (err) {
@@ -19,8 +19,9 @@ app.post('/api/parser/', async (req, res) => {
 			});
 		}
 	});
+
 	try {
-		parser(email, password, fileName);
+		parser({fileName: fileName});
 		res.json('Parsing has begun');
 	} catch (error) {
 		console.log(error);
